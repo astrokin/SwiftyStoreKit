@@ -67,7 +67,7 @@ class ViewController: NSViewController {
 
     func getInfo(purchase: RegisteredPurchase) {
 
-        SwiftyStoreKit.retrieveProductsInfo([AppBundleId + "." + purchase.rawValue]) { result in
+        SwiftyStoreKit.sharedInstance.retrieveProductsInfo([AppBundleId + "." + purchase.rawValue]) { result in
 
             self.showAlert(self.alertForProductRetrievalInfo(result))
         }
@@ -75,7 +75,7 @@ class ViewController: NSViewController {
 
     func purchase(purchase: RegisteredPurchase) {
 
-        SwiftyStoreKit.purchaseProduct(AppBundleId + "." + purchase.rawValue) { result in
+        SwiftyStoreKit.sharedInstance.purchaseProduct(AppBundleId + "." + purchase.rawValue) { result in
 
             self.showAlert(self.alertForPurchaseResult(result))
         }
@@ -83,7 +83,7 @@ class ViewController: NSViewController {
 
     @IBAction func restorePurchases(sender: AnyObject?) {
 
-        SwiftyStoreKit.restorePurchases() { results in
+        SwiftyStoreKit.sharedInstance.restorePurchases() { results in
             
             self.showAlert(self.alertForRestorePurchases(results))
         }
@@ -91,18 +91,18 @@ class ViewController: NSViewController {
 
     @IBAction func verifyReceipt(sender: AnyObject?) {
 
-        SwiftyStoreKit.verifyReceipt() { result in
+        SwiftyStoreKit.sharedInstance.verifyReceipt() { result in
 
             self.showAlert(self.alertForVerifyReceipt(result)) { response in
 
-                SwiftyStoreKit.refreshReceipt()
+                SwiftyStoreKit.sharedInstance.refreshReceipt()
             }
         }
     }
 
     func verifyPurchase(purchase: RegisteredPurchase) {
         
-        SwiftyStoreKit.verifyReceipt() { result in
+        SwiftyStoreKit.sharedInstance.verifyReceipt() { result in
             
             switch result {
             case .Success(let receipt):
@@ -111,7 +111,7 @@ class ViewController: NSViewController {
                 
                 // Specific behaviour for AutoRenewablePurchase
                 if purchase == .AutoRenewablePurchase {
-                    let purchaseResult = SwiftyStoreKit.verifySubscription(
+                    let purchaseResult = SwiftyStoreKit.sharedInstance.verifySubscription(
                         productId: productId,
                         inReceipt: receipt,
                         validUntil: NSDate()
@@ -119,7 +119,7 @@ class ViewController: NSViewController {
                     self.showAlert(self.alertForVerifySubscription(purchaseResult))
                 }
                 else {
-                    let purchaseResult = SwiftyStoreKit.verifyPurchase(
+                    let purchaseResult = SwiftyStoreKit.sharedInstance.verifyPurchase(
                         productId: productId,
                         inReceipt: receipt
                     )
@@ -159,7 +159,7 @@ extension ViewController {
         }
     }
 
-    func alertForProductRetrievalInfo(result: SwiftyStoreKit.RetrieveResults) -> NSAlert {
+    func alertForProductRetrievalInfo(result: SwiftyStoreKit.sharedInstance.RetrieveResults) -> NSAlert {
         
         if let product = result.retrievedProducts.first {
             let numberFormatter = NSNumberFormatter()
@@ -177,7 +177,7 @@ extension ViewController {
         }
     }
     
-    func alertForPurchaseResult(result: SwiftyStoreKit.PurchaseResult) -> NSAlert {
+    func alertForPurchaseResult(result: SwiftyStoreKit.sharedInstance.PurchaseResult) -> NSAlert {
 
         switch result {
         case .Success(let productId):
@@ -201,7 +201,7 @@ extension ViewController {
         }
     }
     
-    func alertForRestorePurchases(results: SwiftyStoreKit.RestoreResults) -> NSAlert {
+    func alertForRestorePurchases(results: SwiftyStoreKit.sharedInstance.RestoreResults) -> NSAlert {
         
         if results.restoreFailedProducts.count > 0 {
             print("Restore Failed: \(results.restoreFailedProducts)")
@@ -217,7 +217,7 @@ extension ViewController {
         }
     }
     
-    func alertForVerifyReceipt(result: SwiftyStoreKit.VerifyReceiptResult) -> NSAlert {
+    func alertForVerifyReceipt(result: SwiftyStoreKit.sharedInstance.VerifyReceiptResult) -> NSAlert {
 
         switch result {
         case .Success(let receipt):
@@ -229,7 +229,7 @@ extension ViewController {
         }
     }
     
-    func alertForVerifySubscription(result: SwiftyStoreKit.VerifySubscriptionResult) -> NSAlert {
+    func alertForVerifySubscription(result: SwiftyStoreKit.sharedInstance.VerifySubscriptionResult) -> NSAlert {
         
         switch result {
         case .Purchased(let expiresDate):
@@ -245,7 +245,7 @@ extension ViewController {
     }
 
 
-    func alertForVerifyPurchase(result: SwiftyStoreKit.VerifyPurchaseResult) -> NSAlert {
+    func alertForVerifyPurchase(result: SwiftyStoreKit.sharedInstance.VerifyPurchaseResult) -> NSAlert {
         
         switch result {
         case .Purchased:

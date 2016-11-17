@@ -1,5 +1,5 @@
 //
-// SwiftyStoreKit.h
+// SwiftyStoreKit.sharedInstance.h
 // SwiftyStoreKit
 //
 // Copyright (c) 2015 Andrea Bizzotto (bizz84@gmail.com)
@@ -24,10 +24,10 @@
 
 #import <UIKit/UIKit.h>
 
-//! Project version number for SwiftyStoreKit.
+//! Project version number for SwiftyStoreKit.sharedInstance.
 FOUNDATION_EXPORT double SwiftyStoreKitVersionNumber;
 
-//! Project version string for SwiftyStoreKit.
+//! Project version string for SwiftyStoreKit.sharedInstance.
 FOUNDATION_EXPORT const unsigned char SwiftyStoreKitVersionString[];
 
 // In this header, you should import all the public headers of your framework using statements like #import <SwiftyStoreKit/PublicHeader.h>

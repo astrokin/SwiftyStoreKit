@@ -66,7 +66,7 @@ class InAppCompleteTransactionsObserver: NSObject, SKPaymentTransactionObserver 
         if callbackCalled {
             return
         }
-        if SwiftyStoreKit.hasInFlightPayments {
+        if SwiftyStoreKit.sharedInstance.hasInFlightPayments {
             return
         }
         

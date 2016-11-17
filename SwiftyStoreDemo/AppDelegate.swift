@@ -39,7 +39,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     
     func completeIAPTransactions() {
         
-        SwiftyStoreKit.completeTransactions() { completedTransactions in
+        SwiftyStoreKit.sharedInstance.completeTransactions() { completedTransactions in
             
             for completedTransaction in completedTransactions {
                 

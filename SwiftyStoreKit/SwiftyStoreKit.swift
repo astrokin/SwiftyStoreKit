@@ -1,5 +1,5 @@
 //
-// SwiftyStoreKit.swift
+// SwiftyStoreKit.sharedInstance.swift
 // SwiftyStoreKit
 //
 // Copyright (c) 2015 Andrea Bizzotto (bizz84@gmail.com)
@@ -91,26 +91,26 @@ public class SwiftyStoreKit {
     }
 
     // MARK: Singleton
-    private static let sharedInstance = SwiftyStoreKit()
+    static let sharedInstance = SwiftyStoreKit()
     
     public class var canMakePayments: Bool {
         return SKPaymentQueue.canMakePayments()
     }
     
-    class var hasInFlightPayments: Bool {
-        return sharedInstance.inflightPurchases.count > 0 || sharedInstance.restoreRequest != nil
+    var hasInFlightPayments: Bool {
+        return inflightPurchases.count > 0 || restoreRequest != nil
     }
     
-    public class func completeTransactions(completion: (completedTransactions: [CompletedTransaction]) -> ()) {
-        sharedInstance.completeTransactionsObserver = InAppCompleteTransactionsObserver(callback: completion)
+    public func completeTransactions(completion: (completedTransactions: [CompletedTransaction]) -> ()) {
+        completeTransactionsObserver = InAppCompleteTransactionsObserver(callback: completion)
     }
     
     // MARK: Public methods
-    public class func retrieveProductsInfo(productIds: Set<String>, completion: (result: RetrieveResults) -> ()) {
+    public func retrieveProductsInfo(productIds: Set<String>, completion: (result: RetrieveResults) -> ()) {
         
-        guard let products = sharedInstance.store.allProductsMatching(productIds) else {
+        guard let products = store.allProductsMatching(productIds) else {
             
-            sharedInstance.requestProducts(productIds, completion: completion)
+            requestProducts(productIds, completion: completion)
             return
         }
         completion(result: RetrieveResults(retrievedProducts: products, invalidProductIDs: [], error: nil))
@@ -122,15 +122,15 @@ public class SwiftyStoreKit {
      *  - Parameter applicationUsername: an opaque identifier for the user’s account on your system
      *  - Parameter completion: handler for result
      */
-    public class func purchaseProduct(productId: String, applicationUsername: String = "", completion: (result: PurchaseResult) -> ()) {
+    public func purchaseProduct(productId: String, applicationUsername: String = "", completion: (result: PurchaseResult) -> ()) {
         
-        if let product = sharedInstance.store.products[productId] {
-            sharedInstance.purchase(product: product, applicationUsername: applicationUsername, completion: completion)
+        if let product = store.products[productId] {
+            purchase(product: product, applicationUsername: applicationUsername, completion: completion)
         }
         else {
-            retrieveProductsInfo(Set([productId])) { result -> () in
+            retrieveProductsInfo(Set([productId])) { [unowned self] result -> () in
                 if let product = result.retrievedProducts.first {
-                    sharedInstance.purchase(product: product, applicationUsername: applicationUsername, completion: completion)
+                    self.purchase(product: product, applicationUsername: applicationUsername, completion: completion)
                 }
                 else if let error = result.error {
                     completion(result: .Error(error: .Failed(error: error)))
@@ -142,12 +142,12 @@ public class SwiftyStoreKit {
         }
     }
     
-    public class func restorePurchases(completion: (results: RestoreResults) -> ()) {
+    public func restorePurchases(completion: (results: RestoreResults) -> ()) {
 
-        sharedInstance.restoreRequest = InAppProductPurchaseRequest.restorePurchases() { results in
+        restoreRequest = InAppProductPurchaseRequest.restorePurchases() { [unowned self] results in
         
-            sharedInstance.restoreRequest = nil
-            let results = sharedInstance.processRestoreResults(results)
+            self.restoreRequest = nil
+            let results = self.processRestoreResults(results)
             completion(results: results)
         }
     }
@@ -158,7 +158,7 @@ public class SwiftyStoreKit {
      *  - Parameter session: the session used to make remote call.
      *  - Parameter completion: handler for result
      */
-    public class func verifyReceipt(
+    public func verifyReceipt(
         password password: String? = nil,
         session: NSURLSession = NSURLSession.sharedSession(),
         completion:(result: VerifyReceiptResult) -> ()) {
@@ -176,7 +176,7 @@ public class SwiftyStoreKit {
      *  - Parameter inReceipt: the receipt to use for looking up the purchase
      *  - return: either NotPurchased or Purchased
      */
-    public class func verifyPurchase(
+    public func verifyPurchase(
         productId productId: String,
         inReceipt receipt: ReceiptInfo
     ) -> VerifyPurchaseResult {
@@ -191,7 +191,7 @@ public class SwiftyStoreKit {
      *  - Parameter validDuration: the duration of the subscription. Only required for non-renewable subscription.
      *  - return: either NotPurchased or Purchased / Expired with the expiry date found in the receipt
      */
-    public class func verifySubscription(
+    public func verifySubscription(
         productId productId: String,
         inReceipt receipt: ReceiptInfo,
         validUntil date: NSDate = NSDate(),
@@ -202,10 +202,10 @@ public class SwiftyStoreKit {
 
     #if os(iOS) || os(tvOS)
     // After verifying receive and have `ReceiptError.NoReceiptData`, refresh receipt using this method
-    public class func refreshReceipt(receiptProperties: [String : AnyObject]? = nil, completion: (result: RefreshReceiptResult) -> ()) {
-        sharedInstance.receiptRefreshRequest = InAppReceiptRefreshRequest.refresh(receiptProperties) { result in
+    public func refreshReceipt(receiptProperties: [String : AnyObject]? = nil, completion: (result: RefreshReceiptResult) -> ()) {
+        receiptRefreshRequest = InAppReceiptRefreshRequest.refresh(receiptProperties) { [unowned self] result in
 
-            sharedInstance.receiptRefreshRequest = nil
+            self.receiptRefreshRequest = nil
 
             switch result {
             case .Success:
@@ -221,7 +221,7 @@ public class SwiftyStoreKit {
     }
     #elseif os(OSX)
      // Call exit with a status of 173. This exit status notifies the system that your application has determined that its receipt is invalid. At this point, the system attempts to obtain a valid receipt and may prompt for the user’s iTunes credentials
-    public class func refreshReceipt() {
+    public func refreshReceipt() {
          exit(ReceiptExitCode.NotValid.rawValue)
     }
     #endif
