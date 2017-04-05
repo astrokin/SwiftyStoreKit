@@ -35,7 +35,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     func completeIAPTransactions() {
 
-        SwiftyStoreKit.completeTransactions(atomically: true) { products in
+        SwiftyStoreKit.shared.completeTransactions(atomically: true) { products in
 
             for product in products {
                 // swiftlint:disable:next for_where
@@ -43,7 +43,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
                     if product.needsFinishTransaction {
                         // Deliver content from server, then:
-                        SwiftyStoreKit.finishTransaction(product.transaction)
+                        SwiftyStoreKit.shared.finishTransaction(product.transaction)
                     }
                     print("purchased: \(product.productId)")
                 }
