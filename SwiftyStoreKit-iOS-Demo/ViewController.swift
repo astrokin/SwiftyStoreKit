@@ -66,7 +66,7 @@ class ViewController: UIViewController {
     func getInfo(_ purchase: RegisteredPurchase) {
 
         NetworkActivityIndicatorManager.networkOperationStarted()
-        SwiftyStoreKit.shared.retrieveProductsInfo([appBundleId + "." + purchase.rawValue]) { result in
+        SwiftyStoreKit.retrieveProductsInfo([appBundleId + "." + purchase.rawValue]) { result in
             NetworkActivityIndicatorManager.networkOperationFinished()
 
             self.showAlert(self.alertForProductRetrievalInfo(result))
@@ -76,13 +76,13 @@ class ViewController: UIViewController {
     func purchase(_ purchase: RegisteredPurchase) {
 
         NetworkActivityIndicatorManager.networkOperationStarted()
-        SwiftyStoreKit.shared.purchaseProduct(appBundleId + "." + purchase.rawValue, atomically: true) { result in
+        SwiftyStoreKit.purchaseProduct(appBundleId + "." + purchase.rawValue, atomically: true) { result in
             NetworkActivityIndicatorManager.networkOperationFinished()
 
             if case .success(let product) = result {
                 // Deliver content from server, then:
                 if product.needsFinishTransaction {
-                    SwiftyStoreKit.shared.finishTransaction(product.transaction)
+                    SwiftyStoreKit.finishTransaction(product.transaction)
                 }
             }
             if let alert = self.alertForPurchaseResult(result) {
@@ -94,12 +94,12 @@ class ViewController: UIViewController {
     @IBAction func restorePurchases() {
 
         NetworkActivityIndicatorManager.networkOperationStarted()
-        SwiftyStoreKit.shared.restorePurchases(atomically: true) { results in
+        SwiftyStoreKit.restorePurchases(atomically: true) { results in
             NetworkActivityIndicatorManager.networkOperationFinished()
 
             for product in results.restoredProducts where product.needsFinishTransaction {
                 // Deliver content from server, then:
-                SwiftyStoreKit.shared.finishTransaction(product.transaction)
+                SwiftyStoreKit.finishTransaction(product.transaction)
             }
             self.showAlert(self.alertForRestorePurchases(results))
         }
@@ -109,7 +109,7 @@ class ViewController: UIViewController {
 
         NetworkActivityIndicatorManager.networkOperationStarted()
 		let appleValidator = AppleReceiptValidator(service: .production)
-		SwiftyStoreKit.shared.verifyReceipt(using: appleValidator, password: "your-shared-secret") { result in
+		SwiftyStoreKit.verifyReceipt(using: appleValidator, password: "your-shared-secret") { result in
             NetworkActivityIndicatorManager.networkOperationFinished()
 
             self.showAlert(self.alertForVerifyReceipt(result))
@@ -126,7 +126,7 @@ class ViewController: UIViewController {
 
         NetworkActivityIndicatorManager.networkOperationStarted()
 		let appleValidator = AppleReceiptValidator(service: .production)
-		SwiftyStoreKit.shared.verifyReceipt(using: appleValidator, password: "your-shared-secret") { result in
+		SwiftyStoreKit.verifyReceipt(using: appleValidator, password: "your-shared-secret") { result in
             NetworkActivityIndicatorManager.networkOperationFinished()
 
             switch result {
@@ -136,7 +136,7 @@ class ViewController: UIViewController {
 
                 switch purchase {
                 case .autoRenewablePurchase:
-                    let purchaseResult = SwiftyStoreKit.shared.verifySubscription(
+                    let purchaseResult = SwiftyStoreKit.verifySubscription(
                         type: .autoRenewable,
                         productId: productId,
                         inReceipt: receipt,
@@ -144,7 +144,7 @@ class ViewController: UIViewController {
                     )
                     self.showAlert(self.alertForVerifySubscription(purchaseResult))
                 case .nonRenewingPurchase:
-                    let purchaseResult = SwiftyStoreKit.shared.verifySubscription(
+                    let purchaseResult = SwiftyStoreKit.verifySubscription(
                         type: .nonRenewing(validDuration: 60),
                         productId: productId,
                         inReceipt: receipt,
@@ -152,7 +152,7 @@ class ViewController: UIViewController {
                     )
                     self.showAlert(self.alertForVerifySubscription(purchaseResult))
                 default:
-                    let purchaseResult = SwiftyStoreKit.shared.verifyPurchase(
+                    let purchaseResult = SwiftyStoreKit.verifyPurchase(
                         productId: productId,
                         inReceipt: receipt
                     )
@@ -170,7 +170,7 @@ class ViewController: UIViewController {
 
     func refreshReceipt() {
 
-        SwiftyStoreKit.shared.refreshReceipt { result in
+        SwiftyStoreKit.refreshReceipt { result in
 
             self.showAlert(self.alertForRefreshReceipt(result))
         }

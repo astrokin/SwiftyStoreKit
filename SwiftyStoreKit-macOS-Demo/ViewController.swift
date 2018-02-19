@@ -67,7 +67,7 @@ class ViewController: NSViewController {
 
     func getInfo(_ purchase: RegisteredPurchase) {
 
-        SwiftyStoreKit.shared.retrieveProductsInfo([appBundleId + "." + purchase.rawValue]) { result in
+        SwiftyStoreKit.retrieveProductsInfo([appBundleId + "." + purchase.rawValue]) { result in
 
             self.showAlert(self.alertForProductRetrievalInfo(result))
         }
@@ -75,12 +75,12 @@ class ViewController: NSViewController {
 
     func purchase(_ purchase: RegisteredPurchase) {
 
-        SwiftyStoreKit.shared.purchaseProduct(appBundleId + "." + purchase.rawValue, atomically: true) { result in
+        SwiftyStoreKit.purchaseProduct(appBundleId + "." + purchase.rawValue, atomically: true) { result in
 
             if case .success(let product) = result {
                 // Deliver content from server, then:
                 if product.needsFinishTransaction {
-                    SwiftyStoreKit.shared.finishTransaction(product.transaction)
+                    SwiftyStoreKit.finishTransaction(product.transaction)
                 }
             }
 
@@ -92,11 +92,11 @@ class ViewController: NSViewController {
 
     @IBAction func restorePurchases(_ sender: Any?) {
 
-        SwiftyStoreKit.shared.restorePurchases(atomically: true) { results in
+        SwiftyStoreKit.restorePurchases(atomically: true) { results in
 
             for product in results.restoredProducts where product.needsFinishTransaction {
                 // Deliver content from server, then:
-                SwiftyStoreKit.shared.finishTransaction(product.transaction)
+                SwiftyStoreKit.finishTransaction(product.transaction)
             }
 
             self.showAlert(self.alertForRestorePurchases(results))
@@ -106,7 +106,7 @@ class ViewController: NSViewController {
     @IBAction func verifyReceipt(_ sender: Any?) {
 
         let appleValidator = AppleReceiptValidator(service: .production)
-        SwiftyStoreKit.shared.verifyReceipt(using: appleValidator, password: "your-shared-secret") { result in
+        SwiftyStoreKit.verifyReceipt(using: appleValidator, password: "your-shared-secret") { result in
 
             self.showAlert(self.alertForVerifyReceipt(result)) { _ in
 
@@ -122,7 +122,7 @@ class ViewController: NSViewController {
     func verifyPurchase(_ purchase: RegisteredPurchase) {
 
         let appleValidator = AppleReceiptValidator(service: .production)
-        SwiftyStoreKit.shared.verifyReceipt(using: appleValidator, password: "your-shared-secret") { result in
+        SwiftyStoreKit.verifyReceipt(using: appleValidator, password: "your-shared-secret") { result in
 
             switch result {
             case .success(let receipt):
@@ -131,21 +131,21 @@ class ViewController: NSViewController {
 
                 switch purchase {
                 case .autoRenewablePurchase:
-                    let purchaseResult = SwiftyStoreKit.shared.verifySubscription(
+                    let purchaseResult = SwiftyStoreKit.verifySubscription(
                         type: .autoRenewable,
                         productId: productId,
                         inReceipt: receipt
                     )
                     self.showAlert(self.alertForVerifySubscription(purchaseResult))
                 case .nonRenewingPurchase:
-                    let purchaseResult = SwiftyStoreKit.shared.verifySubscription(
+                    let purchaseResult = SwiftyStoreKit.verifySubscription(
                         type: .nonRenewing(validDuration: 60),
                         productId: productId,
                         inReceipt: receipt
                     )
                     self.showAlert(self.alertForVerifySubscription(purchaseResult))
                 default:
-                    let purchaseResult = SwiftyStoreKit.shared.verifyPurchase(
+                    let purchaseResult = SwiftyStoreKit.verifyPurchase(
                         productId: productId,
                         inReceipt: receipt
                     )
@@ -160,7 +160,7 @@ class ViewController: NSViewController {
 
     func refreshReceipt() {
 
-        SwiftyStoreKit.shared.refreshReceipt { result in
+        SwiftyStoreKit.refreshReceipt { result in
 
             self.showAlert(self.alertForRefreshReceipt(result))
         }

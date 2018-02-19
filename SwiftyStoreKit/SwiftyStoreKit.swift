@@ -41,11 +41,11 @@ public class SwiftyStoreKit {
 
     // MARK: Internal methods
 
-    func _retrieveProductsInfo(_ productIds: Set<String>, completion: @escaping (RetrieveResults) -> Void) {
+    func retrieveProductsInfo(_ productIds: Set<String>, completion: @escaping (RetrieveResults) -> Void) {
         return productsInfoController.retrieveProductsInfo(productIds, completion: completion)
     }
 
-    func _purchaseProduct(_ productId: String, atomically: Bool = true, applicationUsername: String = "", completion: @escaping ( PurchaseResult) -> Void) {
+    func purchaseProduct(_ productId: String, atomically: Bool = true, applicationUsername: String = "", completion: @escaping ( PurchaseResult) -> Void) {
 
         if let product = productsInfoController.products[productId] {
             purchase(product: product, atomically: atomically, applicationUsername: applicationUsername, completion: completion)
@@ -64,7 +64,7 @@ public class SwiftyStoreKit {
         }
     }
 
-    func _restorePurchases(atomically: Bool = true, applicationUsername: String = "", completion: @escaping (RestoreResults) -> Void) {
+    func restorePurchases(atomically: Bool = true, applicationUsername: String = "", completion: @escaping (RestoreResults) -> Void) {
 
         paymentQueueController.restorePurchases(RestorePurchases(atomically: atomically, applicationUsername: applicationUsername) { results in
 
@@ -73,17 +73,17 @@ public class SwiftyStoreKit {
         })
     }
 
-    func _completeTransactions(atomically: Bool = true, completion: @escaping ([Product]) -> Void) {
+    func completeTransactions(atomically: Bool = true, completion: @escaping ([Product]) -> Void) {
 
         paymentQueueController.completeTransactions(CompleteTransactions(atomically: atomically, callback: completion))
     }
 
-    func _finishTransaction(_ transaction: PaymentTransaction) {
+    func finishTransaction(_ transaction: PaymentTransaction) {
 
         paymentQueueController.finishTransaction(transaction)
     }
 
-    func _refreshReceipt(_ receiptProperties: [String : Any]? = nil, completion: @escaping (RefreshReceiptResult) -> Void) {
+    func refreshReceipt(_ receiptProperties: [String : Any]? = nil, completion: @escaping (RefreshReceiptResult) -> Void) {
         receiptRefreshRequest = InAppReceiptRefreshRequest.refresh(receiptProperties) { result in
 
             self.receiptRefreshRequest = nil
@@ -152,16 +152,16 @@ public class SwiftyStoreKit {
 extension SwiftyStoreKit {
 
     // MARK: Singleton
-    public static let shared = SwiftyStoreKit()
+    private static let sharedInstance = SwiftyStoreKit()
 
     // MARK: Public methods - Purchases
     public class var canMakePayments: Bool {
         return SKPaymentQueue.canMakePayments()
     }
 
-    public func retrieveProductsInfo(_ productIds: Set<String>, completion: @escaping (RetrieveResults) -> Void) {
+    public class func retrieveProductsInfo(_ productIds: Set<String>, completion: @escaping (RetrieveResults) -> Void) {
 
-        return SwiftyStoreKit.shared._retrieveProductsInfo(productIds, completion: completion)
+        return sharedInstance.retrieveProductsInfo(productIds, completion: completion)
     }
 
     /**
@@ -171,30 +171,30 @@ extension SwiftyStoreKit {
      *  - Parameter applicationUsername: an opaque identifier for the user’s account on your system
      *  - Parameter completion: handler for result
      */
-    public func purchaseProduct(_ productId: String, atomically: Bool = true, applicationUsername: String = "", completion: @escaping ( PurchaseResult) -> Void) {
+    public class func purchaseProduct(_ productId: String, atomically: Bool = true, applicationUsername: String = "", completion: @escaping ( PurchaseResult) -> Void) {
 
-        SwiftyStoreKit.shared._purchaseProduct(productId, atomically: atomically, applicationUsername: applicationUsername, completion: completion)
+        sharedInstance.purchaseProduct(productId, atomically: atomically, applicationUsername: applicationUsername, completion: completion)
     }
 
-    public func restorePurchases(atomically: Bool = true, applicationUsername: String = "", completion: @escaping (RestoreResults) -> Void) {
+    public class func restorePurchases(atomically: Bool = true, applicationUsername: String = "", completion: @escaping (RestoreResults) -> Void) {
 
-        SwiftyStoreKit.shared._restorePurchases(atomically: atomically, applicationUsername: applicationUsername, completion: completion)
+        sharedInstance.restorePurchases(atomically: atomically, applicationUsername: applicationUsername, completion: completion)
     }
 
-    public func completeTransactions(atomically: Bool = true, completion: @escaping ([Product]) -> Void) {
+    public class func completeTransactions(atomically: Bool = true, completion: @escaping ([Product]) -> Void) {
 
-        SwiftyStoreKit.shared._completeTransactions(atomically: atomically, completion: completion)
+        sharedInstance.completeTransactions(atomically: atomically, completion: completion)
     }
 
-    public func finishTransaction(_ transaction: PaymentTransaction) {
+    public class func finishTransaction(_ transaction: PaymentTransaction) {
 
-        SwiftyStoreKit.shared._finishTransaction(transaction)
+        sharedInstance.finishTransaction(transaction)
     }
 
     // After verifying receive and have `ReceiptError.NoReceiptData`, refresh receipt using this method
-    public func refreshReceipt(_ receiptProperties: [String : Any]? = nil, completion: @escaping (RefreshReceiptResult) -> Void) {
+    public class func refreshReceipt(_ receiptProperties: [String : Any]? = nil, completion: @escaping (RefreshReceiptResult) -> Void) {
 
-        SwiftyStoreKit.shared._refreshReceipt(receiptProperties, completion: completion)
+        sharedInstance.refreshReceipt(receiptProperties, completion: completion)
     }
 }
 
@@ -215,7 +215,7 @@ extension SwiftyStoreKit {
      *  - Parameter session: the session used to make remote call.
      *  - Parameter completion: handler for result
      */
-    public func verifyReceipt(
+    public class func verifyReceipt(
         using validator: ReceiptValidator,
         password: String? = nil,
         completion:@escaping (VerifyReceiptResult) -> Void) {
@@ -234,7 +234,7 @@ extension SwiftyStoreKit {
      *  - Parameter inReceipt: the receipt to use for looking up the purchase
      *  - return: either notPurchased or purchased
      */
-    public func verifyPurchase(
+    public class func verifyPurchase(
         productId: String,
         inReceipt receipt: ReceiptInfo
         ) -> VerifyPurchaseResult {
@@ -249,7 +249,7 @@ extension SwiftyStoreKit {
      *  - Parameter validDuration: the duration of the subscription. Only required for non-renewable subscription.
      *  - return: either NotPurchased or Purchased / Expired with the expiry date found in the receipt
      */
-    public func verifySubscription(
+    public class func verifySubscription(
         type: SubscriptionType,
         productId: String,
         inReceipt receipt: ReceiptInfo,
