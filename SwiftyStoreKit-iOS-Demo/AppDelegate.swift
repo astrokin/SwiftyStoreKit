@@ -32,25 +32,39 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey : Any]? = nil) -> Bool {
 
-        completeIAPTransactions()
+        setupIAP()
 
         return true
     }
 
-    func completeIAPTransactions() {
+    func setupIAP() {
 
-        SwiftyStoreKit.completeTransactions(atomically: true) { products in
+        SwiftyStoreKit.completeTransactions(atomically: true) { purchases in
 
-            for product in products {
-                // swiftlint:disable:next for_where
-                if product.transaction.transactionState == .purchased || product.transaction.transactionState == .restored {
-
-                    if product.needsFinishTransaction {
+            for purchase in purchases {
+                switch purchase.transaction.transactionState {
+                case .purchased, .restored:
+                    let downloads = purchase.transaction.downloads
+                    if !downloads.isEmpty {
+                        SwiftyStoreKit.start(downloads)
+                    } else if purchase.needsFinishTransaction {
                         // Deliver content from server, then:
-                        SwiftyStoreKit.finishTransaction(product.transaction)
+                        SwiftyStoreKit.finishTransaction(purchase.transaction)
                     }
-                    print("purchased: \(product.productId)")
+                    print("\(purchase.transaction.transactionState.debugDescription): \(purchase.productId)")
+                case .failed, .purchasing, .deferred:
+                    break // do nothing
                 }
+            }
+        }
+        
+        SwiftyStoreKit.updatedDownloadsHandler = { downloads in
+
+            // contentURL is not nil if downloadState == .finished
+            let contentURLs = downloads.flatMap { $0.contentURL }
+            if contentURLs.count == downloads.count {
+                print("Saving: \(contentURLs)")
+                SwiftyStoreKit.finishTransaction(downloads[0].transaction)
             }
         }
     }

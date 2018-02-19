@@ -28,7 +28,7 @@ import StoreKit
 
 class CompleteTransactionsControllerTests: XCTestCase {
 
-    func testProcessTransactions_when_oneRestoredTransaction_then_finishesTransaction_callsCallback_noRemainingTransactions() {
+    func testProcessTransactions_when_atomically_oneRestoredTransaction_then_finishesTransaction_callsCallback_noRemainingTransactions() {
 
         let productIdentifier = "com.SwiftyStoreKit.product1"
         let testProduct = TestProduct(productIdentifier: productIdentifier)
@@ -36,11 +36,11 @@ class CompleteTransactionsControllerTests: XCTestCase {
         let transaction = TestPaymentTransaction(payment: SKPayment(product: testProduct), transactionState: .restored)
 
         var callbackCalled = false
-        let completeTransactions = CompleteTransactions(atomically: true) { products in
+        let completeTransactions = CompleteTransactions(atomically: true) { purchases in
             callbackCalled = true
-            XCTAssertEqual(products.count, 1)
-            let product = products.first!
-            XCTAssertEqual(product.productId, productIdentifier)
+            XCTAssertEqual(purchases.count, 1)
+            let purchase = purchases.first!
+            XCTAssertEqual(purchase.productId, productIdentifier)
         }
 
         let completeTransactionsController = makeCompleteTransactionsController(completeTransactions: completeTransactions)
@@ -56,7 +56,65 @@ class CompleteTransactionsControllerTests: XCTestCase {
         XCTAssertEqual(spy.finishTransactionCalledCount, 1)
     }
 
-    func testProcessTransactions_when_oneTransactionForEachState_then_finishesTransactions_callsCallback_onePurchasingTransactionRemaining() {
+    func testProcessTransactions_when_atomically_oneFailedTransaction_then_finishesTransaction_callsCallback_noRemainingTransactions_noNeedsFinishTransactions() {
+        
+        let productIdentifier = "com.SwiftyStoreKit.product1"
+        let testProduct = TestProduct(productIdentifier: productIdentifier)
+        
+        let transaction = TestPaymentTransaction(payment: SKPayment(product: testProduct), transactionState: .failed)
+        
+        var callbackCalled = false
+        let completeTransactions = CompleteTransactions(atomically: true) { purchases in
+            callbackCalled = true
+            XCTAssertEqual(purchases.count, 1)
+            let purchase = purchases.first!
+            XCTAssertFalse(purchase.needsFinishTransaction)
+            XCTAssertEqual(purchase.productId, productIdentifier)
+        }
+        
+        let completeTransactionsController = makeCompleteTransactionsController(completeTransactions: completeTransactions)
+        
+        let spy = PaymentQueueSpy()
+        
+        let remainingTransactions = completeTransactionsController.processTransactions([transaction], on: spy)
+        
+        XCTAssertEqual(remainingTransactions.count, 0)
+        
+        XCTAssertTrue(callbackCalled)
+        
+        XCTAssertEqual(spy.finishTransactionCalledCount, 1)
+    }
+
+    func testProcessTransactions_when_notAtomically_oneFailedTransaction_then_finishesTransaction_callsCallback_noRemainingTransactions_noNeedsFinishTransactions() {
+        
+        let productIdentifier = "com.SwiftyStoreKit.product1"
+        let testProduct = TestProduct(productIdentifier: productIdentifier)
+        
+        let transaction = TestPaymentTransaction(payment: SKPayment(product: testProduct), transactionState: .failed)
+        
+        var callbackCalled = false
+        let completeTransactions = CompleteTransactions(atomically: false) { purchases in
+            callbackCalled = true
+            XCTAssertEqual(purchases.count, 1)
+            let purchase = purchases.first!
+            XCTAssertFalse(purchase.needsFinishTransaction)
+            XCTAssertEqual(purchase.productId, productIdentifier)
+        }
+        
+        let completeTransactionsController = makeCompleteTransactionsController(completeTransactions: completeTransactions)
+        
+        let spy = PaymentQueueSpy()
+        
+        let remainingTransactions = completeTransactionsController.processTransactions([transaction], on: spy)
+        
+        XCTAssertEqual(remainingTransactions.count, 0)
+        
+        XCTAssertTrue(callbackCalled)
+        
+        XCTAssertEqual(spy.finishTransactionCalledCount, 1)
+    }
+
+    func testProcessTransactions_when_atomically_oneTransactionForEachState_then_finishesTransactions_callsCallback_onePurchasingTransactionRemaining() {
 
         let transactions = [
             makeTestPaymentTransaction(productIdentifier: "com.SwiftyStoreKit.product1", transactionState: .purchased),
@@ -67,12 +125,12 @@ class CompleteTransactionsControllerTests: XCTestCase {
         ]
 
         var callbackCalled = false
-        let completeTransactions = CompleteTransactions(atomically: true) { products in
+        let completeTransactions = CompleteTransactions(atomically: true) { purchases in
             callbackCalled = true
-            XCTAssertEqual(products.count, 4)
+            XCTAssertEqual(purchases.count, 4)
 
             for i in 0..<4 {
-                XCTAssertEqual(products[i].productId, transactions[i].payment.productIdentifier)
+                XCTAssertEqual(purchases[i].productId, transactions[i].payment.productIdentifier)
             }
         }
 
@@ -89,7 +147,7 @@ class CompleteTransactionsControllerTests: XCTestCase {
         XCTAssertEqual(spy.finishTransactionCalledCount, 4)
     }
 
-    func testProcessTransactions_when_zeroTransactions_then_noFinishedTransactions_noCallback_noTransactionsRemaining() {
+    func testProcessTransactions_when_atomically_zeroTransactions_then_noFinishedTransactions_noCallback_noTransactionsRemaining() {
 
         let transactions: [TestPaymentTransaction] = []
 
@@ -108,7 +166,7 @@ class CompleteTransactionsControllerTests: XCTestCase {
         XCTAssertEqual(spy.finishTransactionCalledCount, 0)
     }
 
-    func testProcessTransactions_when_onePurchasingTransaction_then_noFinishedTransactions_noCallback_oneTransactionsRemaining() {
+    func testProcessTransactions_when_atomically_onePurchasingTransaction_then_noFinishedTransactions_noCallback_oneTransactionsRemaining() {
 
         let productIdentifier = "com.SwiftyStoreKit.product1"
         let testProduct = TestProduct(productIdentifier: productIdentifier)
@@ -129,7 +187,7 @@ class CompleteTransactionsControllerTests: XCTestCase {
 
         XCTAssertEqual(spy.finishTransactionCalledCount, 0)
     }
-
+    
     func makeTestPaymentTransaction(productIdentifier: String, transactionState: SKPaymentTransactionState) -> TestPaymentTransaction {
 
         let testProduct = TestProduct(productIdentifier: productIdentifier)
