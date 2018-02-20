@@ -35,14 +35,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     func completeIAPTransactions() {
 
-        SwiftyStoreKit.completeTransactions(atomically: true) { purchases in
+        SwiftyStoreKit.shared.completeTransactions(atomically: true) { purchases in
 
             for purchase in purchases {
                 switch purchase.transaction.transactionState {
                 case .purchased, .restored:
                     if purchase.needsFinishTransaction {
                         // Deliver content from server, then:
-                        SwiftyStoreKit.finishTransaction(purchase.transaction)
+                        SwiftyStoreKit.shared.finishTransaction(purchase.transaction)
                     }
                     print("\(purchase.transaction.transactionState.debugDescription): \(purchase.productId)")
                 case .failed, .purchasing, .deferred:

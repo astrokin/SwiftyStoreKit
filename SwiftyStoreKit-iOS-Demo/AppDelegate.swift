@@ -39,17 +39,17 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func setupIAP() {
 
-        SwiftyStoreKit.completeTransactions(atomically: true) { purchases in
+        SwiftyStoreKit.shared.completeTransactions(atomically: true) { purchases in
 
             for purchase in purchases {
                 switch purchase.transaction.transactionState {
                 case .purchased, .restored:
                     let downloads = purchase.transaction.downloads
                     if !downloads.isEmpty {
-                        SwiftyStoreKit.start(downloads)
+                        SwiftyStoreKit.shared.start(downloads)
                     } else if purchase.needsFinishTransaction {
                         // Deliver content from server, then:
-                        SwiftyStoreKit.finishTransaction(purchase.transaction)
+                        SwiftyStoreKit.shared.finishTransaction(purchase.transaction)
                     }
                     print("\(purchase.transaction.transactionState.debugDescription): \(purchase.productId)")
                 case .failed, .purchasing, .deferred:
@@ -64,7 +64,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             let contentURLs = downloads.flatMap { $0.contentURL }
             if contentURLs.count == downloads.count {
                 print("Saving: \(contentURLs)")
-                SwiftyStoreKit.finishTransaction(downloads[0].transaction)
+                SwiftyStoreKit.shared.finishTransaction(downloads[0].transaction)
             }
         }
     }
